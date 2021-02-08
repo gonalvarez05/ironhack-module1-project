@@ -5,6 +5,7 @@ import p_wrangling.m_wrangling as maw
 
 
 
+
 def argument_parser():
     """
      parsear argumentos
@@ -23,10 +24,17 @@ def main(arguments):
     print('Starting process...')
 
     path = arguments.path
+    df_data, jobs_table, countries_raw= mac.acquire(path)
+    countries_df= maw.cleaning_scrap_data(countries_raw)
+    table_merged = maw.merge_table(df_data, jobs_table, countries_df)
 
-    df_data, jobs_table, countries_table= mac.acquire(path)
 
-    final_df= maw.final_wrangle(df_data, jobs_table, countries_table)
+
+
+
+
+
+
 
     print('Finished process...')
 

@@ -1,8 +1,8 @@
-from sqlalchemy import create_engine
+import sqlite3
 from bs4 import BeautifulSoup
 import pandas as pd
 import requests
-import re
+
 
 url_api= 'http://api.dataatwork.org/v1/jobs/'
 
@@ -11,17 +11,19 @@ web_url= 'https://ec.europa.eu/eurostat/statistics-explained/index.php/Glossary:
 
 def load_db_query(path):
 
-   print('getting db...')
+   conn=sqlite3.connect(path)
 
-   conn_str= 'sqlite:///./data/raw/raw_data_project_m1.db'
+   query= ('select country_info.uuid, country_info.country_code, country_info.rural, career_info.normalized_job_code FROM country_info JOIN career_info ON career_info.uuid = country_info.uuid')
 
-   engine = create_engine(conn_str)
+   print(f'getting db from {path}')
 
-   query= ('select country_info.uuid, country_info.country_code, country_info.rural, career_info.normalized_job_code FROM country_info JOIN career_info ON career_info.uuid = country_info.uuid' , engine)
+   df_data= pd.DataFrame(pd.read_sql_query(query, conn))
+   df_data= df_data.rename(columns={'uuid':'uuid_x'})
 
-   read_query= pd.read_sql_query(query, engine)
+   df_data.to_csv('./data/raw/df_data.csv')
 
-   df_data= pd.DataFrame(read_query)
+
+   print('df-raw is acquired')
 
    return df_data
 
@@ -34,6 +36,10 @@ def get_api_info(df_data):
        list_api.append(result_jobs)
 
    jobs_table = pd.DataFrame(list_api)
+   jobs_table= jobs_table.rename(columns={'uuid': 'normalized_job_code'})
+   jobs_table.to_csv('./data/raw/jobs_table.csv')
+
+   print('jobs title table is acquired')
 
    return jobs_table
 
@@ -43,9 +49,11 @@ def country_code():
 
    html = requests.get(web_url).content
    soup = BeautifulSoup(html, 'html.parser')
-   countries_table = soup.find_all('td')
+   countries_raw = soup.find_all('td')
 
-   return countries_table
+   print('countries-raw acquired')
+
+   return countries_raw
 
 
 def acquire(path):
@@ -53,9 +61,11 @@ def acquire(path):
 
    df_data= load_db_query(path)
    jobs_table= get_api_info(df_data)
-   countries_table= country_code()
+   countries_raw= country_code()
 
-   return df_data, jobs_table, countries_table
+   print('acquire finished')
+
+   return df_data, jobs_table, countries_raw
 
 
 

@@ -1,12 +1,18 @@
 import pandas as pd
 import re
 
-def cleaning_scrap_data(countries_table):
+
+
+def cleaning_scrap_data(countries_raw):
     print('Cleaning scrapped data...')
 
+    #text of the codes and countries
+
     list_countries_raw = []
-    for country in countries_table:
+    for country in countries_raw:
         list_countries_raw.append(country.text)
+
+    #cleaning the spaces and /n from the countries
 
     countries = []
     for country in list_countries_raw:
@@ -21,57 +27,35 @@ def cleaning_scrap_data(countries_table):
             continue
         countries.append(remove_all)
 
-    pairs = 2
-    rows_refactored = [countries[x:x + pairs] for x in range(0, len(countries), pairs)]
+    #Each country and code to list of lists for getting the df after
 
-    countries_df = pd.DataFrame(rows_refactored, columns=['country', 'country_code'])
+    pairs = 2
+    countries_pairs = [countries[x:x + pairs] for x in range(0, len(countries), pairs)]
+    countries_df = pd.DataFrame(countries_pairs, columns=['country', 'country_code'])
     countries_df['country_code'] = countries_df['country_code'].str.replace('UK', 'GB')
     countries_df['country_code'] = countries_df['country_code'].str.replace('EL', 'GR')
+    countries_df.to_csv('./data/raw/countries_df.csv')
+
+
+    print('scraped data ok')
 
     return countries_df
 
-def merge_table(df_data, jobs_table, countries_table):
+def merge_table(df_data, countries_df, jobs_table):
 
-    print('merging data...')
-    db_api_merged = df_data.merge(jobs_table, how='inner', left_on='normalized_job_code', right_on='uuid')
-    all_merged = countries_table.merge(db_api_merged, how='inner', left_on='country_code', right_on='country_code')
-    final_df = all_merged[['uuid_x', 'country', 'rural', 'title']]
+    print('merging data')
 
-    return final_df
+    country_code_merge= pd.merge(left= df_data, right=countries_df, how= 'left', left_on= 'country_code', right_on='country_code')
+    table_merged= pd.merge(left= country_code_merge, right= jobs_table, how='left', left_on= 'normalized_job_code', right_on= 'normalized_job_code')
 
-def fix_errors(final_df):
-
-    final_df['title'] = final_df['title'].fillna('Unemployed')
-    final_df['rural'] = final_df['rural'].replace('Country', 'rural')
-    final_df['rural'] = final_df['rural'].replace('Non-Rural', 'urban')
-    final_df['rural'] = final_df['rural'].replace('city', 'urban')
-    final_df['rural'] = final_df['rural'].replace('countryside', 'urban')
-
-
-    return final_df
-
-def group_final_table(final_df):
+    table_merged.to_csv('./data/raw/table_merged.csv')
 
 
 
-    grouped = final_df.groupby(['country', 'title', 'rural']).agg({'uuid_x': 'count'})
-    grouped.columns = ['Quantity']
-    grouped = grouped.reset_index()
-    grouped['Percentage'] = (grouped['Quantity'] / grouped['Quantity'].sum()) * 100
-    grouped['Percentage'] = grouped['Percentage'].apply(lambda x: "{0:.2f}%".format(x))
+    print('data merged')
 
-    grouped.sort_values(by='Quantity', ascending=False, inplace= True)
+    return table_merged
 
-    return grouped
-
-def final_wrangle(df_data, jobs_table, countries_table):
-
-    countries_df= cleaning_scrap_data(countries_table)
-    merged_data= merge_table(df_data, jobs_table, countries_table)
-    grouped= group_final_table(merged_data)
-
-
-    return group_final_table(grouped)
 
 
 
