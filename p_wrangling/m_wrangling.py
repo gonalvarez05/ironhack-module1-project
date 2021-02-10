@@ -45,8 +45,8 @@ def merge_table(df_data, countries_df, jobs_table):
 
     print('merging data')
 
-    country_code_merge= pd.merge(left= df_data, right=countries_df, how= 'left', left_on= 'country_code', right_on='country_code')
-    table_merged= pd.merge(left= country_code_merge, right= jobs_table, how='left', left_on= 'normalized_job_code', right_on= 'normalized_job_code')
+    country_code_merge= pd.merge(left= df_data, right= jobs_table, how= 'left', left_on= 'country_code', right_on='country_code')
+    table_merged= pd.merge(left= country_code_merge, right= countries_df, how='left', left_on= 'normalized_job_code', right_on= 'normalized_job_code')
 
     table_merged.to_csv('./data/raw/table_merged.csv')
 

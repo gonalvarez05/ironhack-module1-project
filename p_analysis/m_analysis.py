@@ -1,18 +1,26 @@
-def fix_errors(data):
-
-    data['title'] = data['title'].fillna('Unemployed')
-    data['rural'] = data['rural'].replace('Country', 'rural')
-    data['rural'] = data['rural'].replace('Non-Rural', 'urban')
-    data['rural'] = data['rural'].replace('city', 'urban')
-    data['rural'] = data['rural'].replace('countryside', 'urban')
+import pandas as pd
+import p_wrangling.m_wrangling as maw
 
 
-    return data
+def fix_errors(table_merged):
 
 
-def group_final_table():
 
-    grouped = final_df.groupby(['country', 'title', 'rural']).agg({'uuid_x': 'count'})
+    table_merged['title'] = table_merged['title'].fillna('Unemployed')
+    table_merged['rural'] = table_merged['rural'].replace('Country', 'rural')
+    table_merged['rural'] = table_merged['rural'].replace('Non-Rural', 'urban')
+    table_merged['rural'] = table_merged['rural'].replace('city', 'urban')
+    table_merged['rural'] = table_merged['rural'].replace('countryside', 'urban')
+
+    print('errors fixed')
+
+
+    return table_merged
+
+
+def group_final_table(table_merged):
+
+    grouped = table_merged.groupby(['country', 'title', 'rural']).agg({'uuid_x': 'count'})
     grouped.columns = ['Quantity']
     grouped = grouped.reset_index()
     grouped['Percentage'] = (grouped['Quantity'] / grouped['Quantity'].sum()) * 100
@@ -20,7 +28,11 @@ def group_final_table():
 
     grouped.sort_values(by='Quantity', ascending=False, inplace= True)
 
+    grouped.to_csv('./data/results/results.csv')
+
     return grouped
+
+
 
 
 

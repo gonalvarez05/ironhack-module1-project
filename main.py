@@ -2,6 +2,7 @@
 import argparse
 import p_acquisition.m_acquisition as mac
 import p_wrangling.m_wrangling as maw
+import p_analysis.m_analysis as man
 
 
 
@@ -27,6 +28,7 @@ def main(arguments):
     df_data, jobs_table, countries_raw= mac.acquire(path)
     countries_df= maw.cleaning_scrap_data(countries_raw)
     table_merged = maw.merge_table(df_data, jobs_table, countries_df)
+    grouped= man.group_final_table(table_merged)
 
 
 
